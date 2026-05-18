@@ -268,37 +268,30 @@ function StudentEntry() {
   }
 
   return (
+  <div className="min-h-screen bg-black flex flex-col items-center justify-between p-5">
 
-    <div className="min-h-screen bg-black flex items-center justify-center p-5">
+    {/* TOP SECTION */}
+    <div className="w-full flex flex-col items-center justify-center">
 
       <div className="w-full max-w-md bg-gray-900 border border-green-500 rounded-2xl shadow-2xl p-10">
 
         <h1 className="text-5xl font-extrabold text-center text-green-400 mb-3">
-
           VIVA-X
-
         </h1>
 
         <p className="text-center text-gray-400 mb-8">
-
           Student Queue Entry
-
         </p>
 
         {/* Current Slot Info */}
-
         <div className="bg-black border border-blue-500 rounded-xl p-4 mb-6 text-center">
 
           <div className="text-blue-400 text-lg font-bold mb-2">
-
             Current Viva Slot
-
           </div>
 
           <div className="text-white text-2xl font-bold">
-
             Auto Detected by System Time
-
           </div>
 
         </div>
@@ -307,11 +300,7 @@ function StudentEntry() {
           type="text"
           placeholder="Enter Your Name"
           value={studentName}
-          onChange={(e) =>
-            setStudentName(
-              e.target.value
-            )
-          }
+          onChange={(e) => setStudentName(e.target.value)}
           className="w-full p-4 rounded-xl bg-white text-black text-lg mb-8 outline-none"
         />
 
@@ -320,71 +309,63 @@ function StudentEntry() {
           disabled={joining}
           className="w-full bg-green-500 hover:bg-green-400 transition-all duration-300 text-black font-bold text-xl p-4 rounded-xl flex items-center justify-center"
         >
-
-          {
-
-            joining ? (
-
-              <Oval
-                height={30}
-                width={30}
-                color="black"
-                secondaryColor="gray"
-                strokeWidth={5}
-              />
-
-            ) : (
-
-              "Join Queue"
-
-            )
-
-          }
-
+          {joining ? (
+            <Oval
+              height={30}
+              width={30}
+              color="black"
+              secondaryColor="gray"
+              strokeWidth={5}
+            />
+          ) : (
+            "Join Queue"
+          )}
         </button>
 
       </div>
-{/* FOOTER */}
-<div className="mt-12 w-full flex flex-col items-center justify-center text-center border-t border-gray-700 pt-6 relative overflow-hidden px-4 sm:px-6">
+    </div>
 
-  {/* Floating background glow (responsive sizes) */}
-  <div className="absolute inset-0 opacity-20">
-    <div className="absolute top-2 left-1/4 w-20 h-20 sm:w-32 sm:h-32 bg-green-500 rounded-full blur-3xl animate-pulse"></div>
-    <div className="absolute bottom-2 right-1/4 w-20 h-20 sm:w-32 sm:h-32 bg-blue-500 rounded-full blur-3xl animate-pulse"></div>
-  </div>
+    {/* FOOTER */}
+    <div className="w-full flex flex-col items-center justify-center text-center border-t border-gray-700 pt-6 relative overflow-hidden px-4 sm:px-6 mt-8">
 
-  {/* Content */}
-  <div className="relative z-10 w-full max-w-md sm:max-w-lg">
+      {/* Floating background glow */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute top-2 left-1/4 w-20 h-20 sm:w-32 sm:h-32 bg-green-500 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-2 right-1/4 w-20 h-20 sm:w-32 sm:h-32 bg-blue-500 rounded-full blur-3xl animate-pulse"></div>
+      </div>
 
-    <h2 className="text-lg sm:text-2xl font-extrabold tracking-wide bg-gradient-to-r from-green-400 via-white to-green-400 bg-clip-text text-transparent animate-pulse">
-      VIVA-X Smart Queue System
-    </h2>
+      {/* Content */}
+      <div className="relative z-10 w-full max-w-md sm:max-w-lg">
 
-    <p className="text-gray-400 mt-2 text-xs sm:text-sm">
-      Seamless • Fast • Intelligent Viva Management
-    </p>
+        <h2 className="text-lg sm:text-2xl font-extrabold tracking-wide bg-gradient-to-r from-green-400 via-white to-green-400 bg-clip-text text-transparent animate-pulse">
+          VIVA-X Smart Queue System
+        </h2>
 
-    <p className="text-gray-500 mt-3 italic text-xs sm:text-sm">
-      Designed & Developed with precision by
-    </p>
+        <p className="text-gray-400 mt-2 text-xs sm:text-sm">
+          Seamless • Fast • Intelligent Viva Management
+        </p>
 
-    <p className="text-green-300 font-bold text-base sm:text-lg mt-1 tracking-wider animate-pulse break-words">
-      Dr. R. Selvakumar
-    </p>
+        <p className="text-gray-500 mt-3 italic text-xs sm:text-sm">
+          Designed & Developed with precision by
+        </p>
 
-    <div className="mt-4 flex flex-col sm:flex-row gap-1 sm:gap-2 items-center justify-center text-[10px] sm:text-xs text-gray-500">
-      <span>⚡ Real-time Queue</span>
-      <span className="hidden sm:inline">•</span>
-      <span>🔒 Secure System</span>
-      <span className="hidden sm:inline">•</span>
-      <span>📡 Live Sync</span>
+        <p className="text-green-300 font-bold text-base sm:text-lg mt-1 tracking-wider animate-pulse break-words">
+          Dr. R. Selvakumar
+        </p>
+
+        <div className="mt-4 flex flex-col sm:flex-row gap-1 sm:gap-2 items-center justify-center text-[10px] sm:text-xs text-gray-500">
+          <span>⚡ Real-time Queue</span>
+          <span className="hidden sm:inline">•</span>
+          <span>🔒 Secure System</span>
+          <span className="hidden sm:inline">•</span>
+          <span>📡 Live Sync</span>
+        </div>
+
+      </div>
     </div>
 
   </div>
-</div>
-    </div>
-
-  );
+);
 
 }
 
