@@ -268,7 +268,7 @@ function StudentEntry() {
   }
 
   return (
-  <div className="min-h-screen bg-black flex flex-col items-center justify-between p-5">
+  <div className="min-h-screen bg-black flex flex-col items-center justify-start p-5">
 
     {/* TOP SECTION */}
     <div className="w-full flex flex-col items-center justify-center">
@@ -326,7 +326,7 @@ function StudentEntry() {
     </div>
 
     {/* FOOTER */}
-    <div className="w-full flex flex-col items-center justify-center text-center border-t border-gray-700 pt-6 relative overflow-hidden px-4 sm:px-6 mt-8">
+    <div className="w-full flex flex-col items-center justify-center text-center border-t border-gray-700 pt-6 relative overflow-hidden px-4 sm:px-6 mt-2">
 
       {/* Floating background glow */}
       <div className="absolute inset-0 opacity-20">
