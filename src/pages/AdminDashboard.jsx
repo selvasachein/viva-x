@@ -110,8 +110,7 @@ function AdminDashboard() {
   };
 
   const qrUrl =
-    `http://localhost:5173/student-entry?token=${qrToken}`;
-
+  `https://viva-x.vercel.app/student-entry?token=${qrToken}`;
   return (
     <div className="min-h-screen bg-black text-white p-10">
 
