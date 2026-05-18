@@ -355,9 +355,6 @@ function StudentEntry() {
 
         <div className="mt-4 flex flex-col sm:flex-row gap-1 sm:gap-2 items-center justify-center text-[10px] sm:text-xs text-gray-500">
           <span>⚡ Real-time Queue</span>
-          <span className="hidden sm:inline">•</span>
-          <span>🔒 Secure System</span>
-          <span className="hidden sm:inline">•</span>
           <span>📡 Live Sync</span>
         </div>
 
