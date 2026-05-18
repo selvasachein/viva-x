@@ -11,6 +11,7 @@ import {
 
 import { db } from "./firebase";
 
+// Allocate student to available counter
 export const allocateStudent = async (
   studentId,
   studentName
@@ -89,13 +90,15 @@ export const allocateStudent = async (
 
     }
 
-    // No slot available
+    // No slots available
     if (!allocated) {
 
       await updateDoc(
         doc(db, "students", studentId),
         {
-          status: "waiting"
+          status: "waiting",
+          assignedCounter: null,
+          assignedFaculty: ""
         }
       );
 
@@ -109,6 +112,7 @@ export const allocateStudent = async (
 
 };
 
+// Complete viva and move queue
 export const completeViva = async (
   counterId,
   counterData
@@ -129,6 +133,7 @@ export const completeViva = async (
 
     }
 
+    // Default empty slots
     let newProgress = null;
 
     let newWaitlist = null;
@@ -136,7 +141,9 @@ export const completeViva = async (
     // Move waitlist -> progress
     if (counterData.waitlistStudent) {
 
-      newProgress = counterData.waitlistStudent;
+      newProgress = {
+        ...counterData.waitlistStudent
+      };
 
       await updateDoc(
         doc(
@@ -187,7 +194,7 @@ export const completeViva = async (
 
     }
 
-    // Update counter slots
+    // Update counter
     await updateDoc(
       doc(db, "counters", counterId),
       {
