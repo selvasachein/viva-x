@@ -342,7 +342,7 @@ function StudentEntry() {
         </h2>
 
         <p className="text-gray-400 mt-2 text-xs sm:text-sm">
-          Seamless • Fast • Intelligent Viva Management
+          ⚡ Real-time Queue 📡 Live Sync
         </p>
 
         <p className="text-gray-500 mt-3 italic text-xs sm:text-sm">
@@ -352,11 +352,6 @@ function StudentEntry() {
         <p className="text-green-300 font-bold text-base sm:text-lg mt-1 tracking-wider animate-pulse break-words">
           Dr. R. Selvakumar
         </p>
-
-        <div className="mt-4 flex flex-col sm:flex-row gap-1 sm:gap-2 items-center justify-center text-[10px] sm:text-xs text-gray-500">
-          <span>⚡ Real-time Queue</span>
-          <span>📡 Live Sync</span>
-        </div>
 
       </div>
     </div>
