@@ -9,22 +9,22 @@ import {
 const firebaseConfig = {
 
   apiKey:
-    "YOUR_API_KEY",
+    "AIzaSyCS7aS-TRbzTf4vTQq5nIsA-1SVJvO_eIY",
 
   authDomain:
-    "YOUR_PROJECT.firebaseapp.com",
+    "viva-x-smart-queue.firebaseapp.com",
 
   projectId:
-    "YOUR_PROJECT_ID",
+    "viva-x-smart-queue",
 
   storageBucket:
-    "YOUR_PROJECT.firebasestorage.app",
+    "viva-x-smart-queue.firebasestorage.app",
 
   messagingSenderId:
-    "YOUR_MESSAGING_SENDER_ID",
+    "271666163491",
 
   appId:
-    "YOUR_APP_ID"
+    "1:271666163491:web:ea6b9fbde4a1363c39a696"
 
 };
 
@@ -34,7 +34,7 @@ const app =
     firebaseConfig
   );
 
-// Firestore DB
+// Firestore Database
 export const db =
   getFirestore(app);
 

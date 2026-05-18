@@ -89,7 +89,7 @@ function Login() {
     } catch (error) {
 
       console.log(error);
-
+ alert(error.message);
       setLoading(false);
 
     }
