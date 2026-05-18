@@ -4,6 +4,8 @@ import {
   Route
 } from "react-router-dom";
 
+import Login from "./pages/Login";
+
 import AdminDashboard from "./pages/AdminDashboard";
 
 import CounterScreen from "./pages/CounterScreen";
@@ -22,13 +24,19 @@ function App() {
 
       <Routes>
 
-        {/* Admin Dashboard */}
+        {/* Login Page */}
         <Route
           path="/"
+          element={<Login />}
+        />
+
+        {/* Admin Dashboard */}
+        <Route
+          path="/admin"
           element={<AdminDashboard />}
         />
 
-        {/* Counter Screen */}
+        {/* Faculty Counter */}
         <Route
           path="/counter"
           element={<CounterScreen />}

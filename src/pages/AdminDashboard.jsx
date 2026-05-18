@@ -8,11 +8,20 @@ import {
   setDoc
 } from "firebase/firestore";
 
-import { QRCodeSVG } from "qrcode.react";
+import {
+  useNavigate
+} from "react-router-dom";
 
-import { db } from "../services/firebase";
+import {
+  QRCodeSVG
+} from "qrcode.react";
 
-import { getDeviceId } from "../services/deviceService";
+import { db }
+from "../services/firebase";
+
+import {
+  getDeviceId
+} from "../services/deviceService";
 
 import {
   checkDailyReset
@@ -20,11 +29,8 @@ import {
 
 function AdminDashboard() {
 
-  useEffect(() => {
-
-  checkDailyReset();
-
-}, []);
+  const navigate =
+    useNavigate();
 
   const [counterNo, setCounterNo] =
     useState("");
@@ -32,12 +38,36 @@ function AdminDashboard() {
   const [qrToken, setQrToken] =
     useState("");
 
-  // Register device
+  // Protect admin page
+  useEffect(() => {
+
+    const isAdmin =
+      localStorage.getItem(
+        "vivaAdmin"
+      );
+
+    if (!isAdmin) {
+
+      navigate("/");
+
+    }
+
+  }, []);
+
+  // Daily reset
+  useEffect(() => {
+
+    checkDailyReset();
+
+  }, []);
+
+  // Register counter device
   const registerDevice = async () => {
 
     try {
 
-      const deviceId = getDeviceId();
+      const deviceId =
+        getDeviceId();
 
       await setDoc(
         doc(
@@ -46,11 +76,18 @@ function AdminDashboard() {
           `counter-${counterNo}`
         ),
         {
-          counterNo: Number(counterNo),
-          deviceId: deviceId,
+          counterNo:
+            Number(counterNo),
+
+          deviceId:
+            deviceId,
+
           facultyName: "",
+
           active: false,
+
           progressStudent: null,
+
           waitlistStudent: null
         },
         { merge: true }
@@ -109,16 +146,38 @@ function AdminDashboard() {
 
   };
 
+  // Production QR URL
   const qrUrl =
-  `https://viva-x.vercel.app/student-entry?token=${qrToken}`;
+    `https://viva-x.vercel.app/student-entry?token=${qrToken}`;
+
   return (
+
     <div className="min-h-screen bg-black text-white p-10">
 
-      <h1 className="text-5xl font-bold mb-10">
+      {/* Logout Button */}
+
+      <button
+        onClick={() => {
+
+          localStorage.removeItem(
+            "vivaAdmin"
+          );
+
+          navigate("/");
+
+        }}
+        className="bg-red-500 px-5 py-2 rounded mb-8 text-white font-bold"
+      >
+        Logout
+      </button>
+
+      {/* Heading */}
+
+      <h1 className="text-5xl font-bold mb-10 text-green-400">
         VIVA-X Admin Dashboard
       </h1>
 
-      {/* Device Registration */}
+      {/* Counter Registration */}
 
       <div className="mb-16">
 
@@ -131,7 +190,9 @@ function AdminDashboard() {
           placeholder="Enter Counter Number"
           value={counterNo}
           onChange={(e) =>
-            setCounterNo(e.target.value)
+            setCounterNo(
+              e.target.value
+            )
           }
           className="w-full max-w-md p-4 rounded bg-white text-black mb-5 border border-gray-400"
         />
@@ -140,7 +201,7 @@ function AdminDashboard() {
 
         <button
           onClick={registerDevice}
-          className="bg-blue-500 px-6 py-3 rounded text-xl"
+          className="bg-blue-500 px-6 py-3 rounded text-xl font-bold"
         >
           Register This Device
         </button>
@@ -165,9 +226,20 @@ function AdminDashboard() {
         {
           qrToken && (
 
-            <div className="mt-10 bg-white p-5 inline-block rounded">
+            <div className="mt-10 bg-white p-5 inline-block rounded-xl">
 
-              <QRCodeSVG value={qrUrl} size={256} />
+              <QRCodeSVG
+                value={qrUrl}
+                size={256}
+              />
+
+              {/* QR URL */}
+
+              <div className="text-black mt-5 text-sm break-all max-w-xs">
+
+                {qrUrl}
+
+              </div>
 
             </div>
 
@@ -177,7 +249,9 @@ function AdminDashboard() {
       </div>
 
     </div>
+
   );
+
 }
 
 export default AdminDashboard;
