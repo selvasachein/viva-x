@@ -16,6 +16,10 @@ import {
   QRCodeSVG
 } from "qrcode.react";
 
+import {
+  Oval
+} from "react-loader-spinner";
+
 import { db }
 from "../services/firebase";
 
@@ -38,7 +42,10 @@ function AdminDashboard() {
   const [qrToken, setQrToken] =
     useState("");
 
-  // Protect admin page
+  const [loading, setLoading] =
+    useState(false);
+
+  // Protect Admin Page
   useEffect(() => {
 
     const isAdmin =
@@ -54,134 +61,158 @@ function AdminDashboard() {
 
   }, []);
 
-  // Daily reset
+  // Daily Reset
   useEffect(() => {
 
     checkDailyReset();
 
   }, []);
 
-  // Register counter device
-  const registerDevice = async () => {
+  // Register Counter Device
+  const registerDevice =
+    async () => {
 
-    try {
+      try {
 
-      const deviceId =
-        getDeviceId();
+        if (!counterNo) {
 
-      await setDoc(
-        doc(
-          db,
-          "counters",
-          `counter-${counterNo}`
-        ),
-        {
-          counterNo:
-            Number(counterNo),
+          alert(
+            "Enter Counter Number"
+          );
 
-          deviceId:
-            deviceId,
+          return;
 
-          facultyName: "",
+        }
 
-          active: false,
+        const deviceId =
+          getDeviceId();
 
-          progressStudent: null,
+        await setDoc(
+          doc(
+            db,
+            "counters",
+            `counter-${counterNo}`
+          ),
+          {
+            counterNo:
+              Number(counterNo),
 
-          waitlistStudent: null
-        },
-        { merge: true }
-      );
+            deviceId:
+              deviceId,
 
-      alert(
-        "Device Registered Successfully"
-      );
+            facultyName: "",
 
-    } catch (error) {
+            active: false,
 
-      console.log(error);
+            progressStudent: null,
 
-    }
+            waitlistStudent: null
+          },
+          { merge: true }
+        );
 
-  };
+        alert(
+          "Device Registered Successfully"
+        );
+
+      } catch (error) {
+
+        console.log(error);
+
+      }
+
+    };
 
   // Generate QR
-  const generateQR = async () => {
+  const generateQR =
+    async () => {
 
-    try {
+      try {
 
-      const token =
-        Math.random()
-          .toString(36)
-          .substring(2, 10);
+        setLoading(true);
 
-      const expiresAt =
-        Date.now() +
-        2 * 60 * 60 * 1000;
+        const token =
+          Math.random()
+            .toString(36)
+            .substring(2, 10);
 
-      await setDoc(
-        doc(
-          db,
-          "qrSessions",
-          "currentSession"
-        ),
-        {
-          token,
-          expiresAt,
-          active: true
-        }
-      );
+        const expiresAt =
+          Date.now() +
+          2 * 60 * 60 * 1000;
 
-      setQrToken(token);
+        await setDoc(
+          doc(
+            db,
+            "qrSessions",
+            "currentSession"
+          ),
+          {
+            token,
+            expiresAt,
+            active: true
+          }
+        );
 
-      alert(
-        "QR Generated Successfully"
-      );
+        setQrToken(token);
 
-    } catch (error) {
+        setLoading(false);
 
-      console.log(error);
+      } catch (error) {
 
-    }
+        console.log(error);
 
-  };
+        setLoading(false);
 
-  // Production QR URL
+      }
+
+    };
+
+  // QR URL
   const qrUrl =
     `https://viva-x.vercel.app/student-entry?token=${qrToken}`;
 
   return (
 
-    <div className="min-h-screen bg-black text-white p-10">
+    <div className="min-h-screen bg-black text-white p-6 md:p-10">
 
-      {/* Logout Button */}
+      {/* Top Bar */}
 
-      <button
-        onClick={() => {
+      <div className="flex justify-between items-center mb-10">
 
-          localStorage.removeItem(
-            "vivaAdmin"
-          );
+        <div>
 
-          navigate("/");
+          <h1 className="text-5xl font-extrabold text-green-400">
+            VIVA-X
+          </h1>
 
-        }}
-        className="bg-red-500 px-5 py-2 rounded mb-8 text-white font-bold"
-      >
-        Logout
-      </button>
+          <p className="text-gray-400 mt-2">
+            Smart Queue Management
+          </p>
 
-      {/* Heading */}
+        </div>
 
-      <h1 className="text-5xl font-bold mb-10 text-green-400">
-        VIVA-X Admin Dashboard
-      </h1>
+        <button
+          onClick={() => {
 
-      {/* Counter Registration */}
+            localStorage.removeItem(
+              "vivaAdmin"
+            );
 
-      <div className="mb-16">
+            navigate("/");
 
-        <h2 className="text-3xl font-bold mb-5">
+          }}
+          className="bg-red-500 hover:bg-red-400 px-5 py-3 rounded-xl font-bold"
+        >
+          Logout
+        </button>
+
+      </div>
+
+      {/* Register Device */}
+
+      <div className="bg-gray-900 border border-blue-500 rounded-2xl p-8 mb-10 shadow-xl">
+
+        <h2 className="text-3xl font-bold text-blue-400 mb-6">
           Register Counter Device
         </h2>
 
@@ -194,46 +225,64 @@ function AdminDashboard() {
               e.target.value
             )
           }
-          className="w-full max-w-md p-4 rounded bg-white text-black mb-5 border border-gray-400"
+          className="w-full max-w-md p-4 rounded-xl bg-white text-black text-lg mb-5"
         />
 
         <br />
 
         <button
           onClick={registerDevice}
-          className="bg-blue-500 px-6 py-3 rounded text-xl font-bold"
+          className="bg-blue-500 hover:bg-blue-400 px-6 py-3 rounded-xl text-xl font-bold"
         >
-          Register This Device
+          Register Device
         </button>
 
       </div>
 
       {/* QR Generator */}
 
-      <div>
+      <div className="bg-gray-900 border border-green-500 rounded-2xl p-8 shadow-xl">
 
-        <h2 className="text-3xl font-bold mb-5">
+        <h2 className="text-3xl font-bold text-green-400 mb-6">
           Generate Student QR
         </h2>
 
         <button
           onClick={generateQR}
-          className="bg-green-500 text-black px-6 py-3 rounded text-xl font-bold"
+          disabled={loading}
+          className="bg-green-500 hover:bg-green-400 text-black px-8 py-4 rounded-xl text-xl font-bold flex items-center justify-center min-w-[250px]"
         >
-          Generate New QR
+
+          {
+            loading ? (
+
+              <Oval
+                height={30}
+                width={30}
+                color="black"
+                secondaryColor="gray"
+                strokeWidth={5}
+              />
+
+            ) : (
+
+              "Generate New QR"
+
+            )
+          }
+
         </button>
 
         {
+
           qrToken && (
 
-            <div className="mt-10 bg-white p-5 inline-block rounded-xl">
+            <div className="mt-10 bg-white inline-block p-6 rounded-2xl">
 
               <QRCodeSVG
                 value={qrUrl}
-                size={256}
+                size={260}
               />
-
-              {/* QR URL */}
 
               <div className="text-black mt-5 text-sm break-all max-w-xs">
 
@@ -244,6 +293,7 @@ function AdminDashboard() {
             </div>
 
           )
+
         }
 
       </div>

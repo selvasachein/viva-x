@@ -1,139 +1,227 @@
-import { useEffect, useState } from "react";
+import {
+  useState,
+  useEffect
+} from "react";
 
 import {
   collection,
   onSnapshot
 } from "firebase/firestore";
 
-import { db } from "../services/firebase";
+import { db }
+from "../services/firebase";
 
 function QueueDisplay() {
 
   const [counters, setCounters] =
     useState([]);
 
+  // Live Counter Updates
   useEffect(() => {
 
-    const unsubscribe = onSnapshot(
-      collection(db, "counters"),
-      (snapshot) => {
+    const unsubscribe =
+      onSnapshot(
+        collection(db, "counters"),
+        (snapshot) => {
 
-        const counterData = [];
+          const counterList =
+            snapshot.docs
+              .map((doc) => ({
+                id: doc.id,
+                ...doc.data()
+              }))
+              .filter(
+                (counter) =>
+                  counter.active
+              )
+              .sort(
+                (a, b) =>
+                  a.counterNo -
+                  b.counterNo
+              );
 
-        snapshot.forEach((doc) => {
+          setCounters(counterList);
 
-          const data = doc.data();
-
-          if (data.active) {
-
-            counterData.push({
-              id: doc.id,
-              ...data
-            });
-
-          }
-
-        });
-
-        // Sort counters
-        counterData.sort(
-          (a, b) =>
-            a.counterNo - b.counterNo
-        );
-
-        setCounters(counterData);
-
-      }
-    );
+        }
+      );
 
     return () => unsubscribe();
 
   }, []);
 
   return (
-    <div className="min-h-screen bg-black text-white p-10">
 
-      <h1 className="text-6xl font-bold text-center mb-16 text-green-400">
-        VIVA-X LIVE QUEUE
-      </h1>
+    <div className="min-h-screen bg-black text-white p-6 md:p-10">
+
+      {/* Header */}
+
+      <div className="text-center mb-12">
+
+        <h1 className="text-6xl font-extrabold text-green-400 mb-3 tracking-wider">
+
+          VIVA-X
+
+        </h1>
+
+        <p className="text-2xl text-gray-400">
+
+          Live Queue Display
+
+        </p>
+
+      </div>
 
       {
+
         counters.length === 0 ? (
 
-          <div className="text-center text-4xl text-gray-400">
-            No Active Counters
+          <div className="flex items-center justify-center h-[60vh]">
+
+            <div className="bg-gray-900 border border-red-500 rounded-2xl p-10 text-center shadow-2xl">
+
+              <h2 className="text-4xl text-red-500 font-bold mb-4">
+
+                No Active Counters
+
+              </h2>
+
+              <p className="text-gray-400 text-xl">
+
+                Waiting for faculty activation...
+
+              </p>
+
+            </div>
+
           </div>
 
         ) : (
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
 
             {
+
               counters.map((counter) => (
 
                 <div
                   key={counter.id}
-                  className="bg-gray-900 rounded-2xl p-8 border border-gray-700"
+                  className="bg-gray-900 border border-green-500 rounded-3xl p-8 shadow-2xl hover:scale-105 transition-all duration-300"
                 >
 
-                  <div className="text-4xl font-bold mb-6 text-yellow-400">
-                    Counter {counter.counterNo}
-                  </div>
+                  {/* Counter Header */}
 
-                  <div className="text-2xl mb-8">
-                    Faculty:
-                    <span className="text-cyan-400 ml-3 font-bold">
-                      {counter.facultyName}
-                    </span>
-                  </div>
+                  <div className="flex justify-between items-center mb-8">
 
-                  <div className="space-y-6">
+                    <div>
 
-                    <div className="bg-green-500 text-black p-5 rounded-xl">
+                      <h2 className="text-4xl font-extrabold text-green-400">
 
-                      <div className="text-xl font-bold mb-2">
-                        CURRENT STUDENT
-                      </div>
+                        Counter
+                        {" "}
+                        {counter.counterNo}
 
-                      <div className="text-3xl font-bold">
-                        {
-                          counter.progressStudent
-                            ? counter.progressStudent.name
-                            : "Waiting..."
-                        }
-                      </div>
+                      </h2>
+
+                      <p className="text-xl text-blue-400 mt-2 font-semibold">
+
+                        {counter.facultyName}
+
+                      </p>
 
                     </div>
 
-                    <div className="bg-blue-500 text-black p-5 rounded-xl">
+                    <div className="w-5 h-5 rounded-full bg-green-400 animate-pulse"></div>
 
-                      <div className="text-xl font-bold mb-2">
-                        NEXT STUDENT
-                      </div>
+                  </div>
 
-                      <div className="text-3xl font-bold">
-                        {
-                          counter.waitlistStudent
-                            ? counter.waitlistStudent.name
-                            : "Waiting..."
-                        }
-                      </div>
+                  {/* Progress Section */}
+
+                  <div className="bg-black rounded-2xl p-6 border border-blue-500 mb-6">
+
+                    <div className="text-blue-400 text-2xl font-bold mb-4">
+
+                      IN PROGRESS
 
                     </div>
+
+                    {
+
+                      counter.progressStudent ? (
+
+                        <div className="text-4xl font-extrabold text-white break-words">
+
+                          {
+                            counter.progressStudent.name
+                          }
+
+                        </div>
+
+                      ) : (
+
+                        <div className="text-2xl text-gray-500">
+
+                          No Student
+
+                        </div>
+
+                      )
+
+                    }
+
+                  </div>
+
+                  {/* Waitlist Section */}
+
+                  <div className="bg-black rounded-2xl p-6 border border-yellow-500">
+
+                    <div className="text-yellow-400 text-2xl font-bold mb-4">
+
+                      WAITLIST
+
+                    </div>
+
+                    {
+
+                      counter.waitlistStudent ? (
+
+                        <div className="text-4xl font-extrabold text-white break-words">
+
+                          {
+                            counter.waitlistStudent.name
+                          }
+
+                        </div>
+
+                      ) : (
+
+                        <div className="text-2xl text-gray-500">
+
+                          Waiting...
+
+                        </div>
+
+                      )
+
+                    }
 
                   </div>
 
                 </div>
+
               ))
+
             }
 
           </div>
 
         )
+
       }
 
     </div>
+
   );
+
 }
 
 export default QueueDisplay;

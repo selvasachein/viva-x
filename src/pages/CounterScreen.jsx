@@ -1,307 +1,421 @@
-import { useEffect, useState } from "react";
+import {
+  useState,
+  useEffect
+} from "react";
 
 import {
   collection,
-  getDocs,
-  updateDoc,
+  onSnapshot,
+  query,
+  where,
   doc,
-  deleteDoc
+  updateDoc
 } from "firebase/firestore";
 
-import { db } from "../services/firebase";
+import {
+  Oval
+} from "react-loader-spinner";
 
-import { getDeviceId } from "../services/deviceService";
+import { db }
+from "../services/firebase";
 
-import { completeViva } from "../services/queueService";
+import {
+  getDeviceId
+} from "../services/deviceService";
+
+import {
+  completeViva
+} from "../services/queueService";
 
 function CounterScreen() {
 
-  const [counter, setCounter] = useState(null);
+  const [facultyName, setFacultyName] =
+    useState("");
 
-  const [facultyName, setFacultyName] = useState("");
+  const [counterData, setCounterData] =
+    useState(null);
 
-  // Check authorization
+  const [counterId, setCounterId] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const deviceId =
+    getDeviceId();
+
+  // Find Registered Counter
   useEffect(() => {
 
-    checkAuthorization();
+    const q = query(
+      collection(db, "counters"),
+      where("deviceId", "==", deviceId)
+    );
 
-  }, []);
+    const unsubscribe =
+      onSnapshot(q, (snapshot) => {
 
-  // Refresh counter data every 2 seconds
-  useEffect(() => {
+        if (!snapshot.empty) {
 
-    if (!counter) return;
+          const counterDoc =
+            snapshot.docs[0];
 
-    const interval = setInterval(() => {
+          setCounterId(
+            counterDoc.id
+          );
 
-      checkAuthorization();
-
-    }, 2000);
-
-    return () => clearInterval(interval);
-
-  }, [counter]);
-
-  const checkAuthorization = async () => {
-
-    try {
-
-      const deviceId = getDeviceId();
-
-      const snapshot = await getDocs(
-        collection(db, "counters")
-      );
-
-      snapshot.forEach((document) => {
-
-        const data = document.data();
-
-        if (data.deviceId === deviceId) {
-
-          setCounter({
-            id: document.id,
-            ...data
+          setCounterData({
+            id: counterDoc.id,
+            ...counterDoc.data()
           });
 
         }
 
       });
 
-    } catch (error) {
+    return () => unsubscribe();
 
-      console.log(error);
+  }, []);
 
-    }
+  // Activate Counter
+  const activateCounter =
+    async () => {
 
-  };
+      try {
 
-  // Activate counter
-  const activateCounter = async () => {
+        if (!facultyName) {
 
-    if (!facultyName) {
+          alert(
+            "Enter Faculty Name"
+          );
 
-      alert("Enter Faculty Name");
+          return;
 
-      return;
-
-    }
-
-    try {
-
-      await updateDoc(
-        doc(db, "counters", counter.id),
-        {
-          facultyName: facultyName,
-          active: true
         }
-      );
 
-      alert("Counter Activated");
-
-      setCounter({
-        ...counter,
-        facultyName: facultyName,
-        active: true
-      });
-
-    } catch (error) {
-
-      console.log(error);
-
-    }
-
-  };
-
-  // End session
-  const endSession = async () => {
-
-    try {
-
-      // Delete progress student
-      if (counter.progressStudent) {
-
-        await deleteDoc(
+        await updateDoc(
           doc(
             db,
-            "students",
-            counter.progressStudent.id
-          )
+            "counters",
+            counterId
+          ),
+          {
+            facultyName,
+            active: true
+          }
         );
+
+      } catch (error) {
+
+        console.log(error);
 
       }
 
-      // Delete waitlist student
-      if (counter.waitlistStudent) {
+    };
 
-        await deleteDoc(
+  // Complete Viva
+  const handleComplete =
+    async () => {
+
+      try {
+
+        setLoading(true);
+
+        await completeViva(
+          counterId,
+          counterData
+        );
+
+        setLoading(false);
+
+      } catch (error) {
+
+        console.log(error);
+
+        setLoading(false);
+
+      }
+
+    };
+
+  // Session Over
+  const sessionOver =
+    async () => {
+
+      try {
+
+        await updateDoc(
           doc(
             db,
-            "students",
-            counter.waitlistStudent.id
-          )
+            "counters",
+            counterId
+          ),
+          {
+            facultyName: "",
+
+            active: false,
+
+            progressStudent: null,
+
+            waitlistStudent: null
+          }
         );
+
+        alert(
+          "Session Closed"
+        );
+
+      } catch (error) {
+
+        console.log(error);
 
       }
 
-      // Delete all waiting students
-      const studentsSnapshot = await getDocs(
-        collection(db, "students")
-      );
+    };
 
-      for (const studentDoc of studentsSnapshot.docs) {
-
-        await deleteDoc(
-          doc(db, "students", studentDoc.id)
-        );
-
-      }
-
-      // Reset counter
-      await updateDoc(
-        doc(db, "counters", counter.id),
-        {
-          facultyName: "",
-          active: false,
-          progressStudent: null,
-          waitlistStudent: null
-        }
-      );
-
-      alert("Session Ended");
-
-      setCounter({
-        ...counter,
-        facultyName: "",
-        active: false,
-        progressStudent: null,
-        waitlistStudent: null
-      });
-
-      setFacultyName("");
-
-    } catch (error) {
-
-      console.log(error);
-
-    }
-
-  };
-
-  // Unauthorized device
-  if (!counter) {
+  // Counter Not Registered
+  if (!counterData) {
 
     return (
-      <div className="min-h-screen bg-black text-red-500 flex items-center justify-center text-3xl font-bold">
 
-        Unauthorized Device
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-5">
+
+        <div className="bg-gray-900 border border-red-500 rounded-2xl p-10 text-center">
+
+          <h1 className="text-4xl font-bold text-red-500 mb-5">
+            Device Not Registered
+          </h1>
+
+          <p className="text-gray-300 text-lg">
+            Register this device from Admin Dashboard.
+          </p>
+
+        </div>
 
       </div>
+
+    );
+
+  }
+
+  // Activate Screen
+  if (!counterData.active) {
+
+    return (
+
+      <div className="min-h-screen bg-black flex items-center justify-center p-5">
+
+        <div className="w-full max-w-md bg-gray-900 border border-blue-500 rounded-2xl p-10 shadow-2xl">
+
+          <h1 className="text-5xl font-extrabold text-center text-blue-400 mb-3">
+            VIVA-X
+          </h1>
+
+          <p className="text-center text-gray-400 mb-10">
+            Activate Counter
+          </p>
+
+          <div className="text-center text-2xl mb-8 text-white">
+
+            Counter No :
+            {" "}
+            <span className="text-green-400 font-bold">
+              {counterData.counterNo}
+            </span>
+
+          </div>
+
+          <input
+            type="text"
+            placeholder="Enter Faculty Name"
+            value={facultyName}
+            onChange={(e) =>
+              setFacultyName(
+                e.target.value
+              )
+            }
+            className="w-full p-4 rounded-xl bg-white text-black text-lg mb-8 outline-none"
+          />
+
+          <button
+            onClick={activateCounter}
+            className="w-full bg-blue-500 hover:bg-blue-400 text-black font-bold text-xl p-4 rounded-xl"
+          >
+            Activate Counter
+          </button>
+
+        </div>
+
+      </div>
+
     );
 
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-10">
 
-      <h1 className="text-5xl font-bold mb-5">
-        VIVA-X Counter
-      </h1>
+    <div className="min-h-screen bg-black text-white p-6 md:p-10">
 
-      <div className="text-2xl mb-10">
-        Counter Number:
-        <span className="text-green-400 ml-3">
-          {counter.counterNo}
-        </span>
+      {/* Header */}
+
+      <div className="flex justify-between items-center mb-10">
+
+        <div>
+
+          <h1 className="text-5xl font-extrabold text-green-400">
+            VIVA-X
+          </h1>
+
+          <p className="text-gray-400 mt-2">
+            Smart Viva Counter
+          </p>
+
+        </div>
+
+        <button
+          onClick={sessionOver}
+          className="bg-red-500 hover:bg-red-400 px-6 py-3 rounded-xl font-bold text-lg"
+        >
+          Session Over
+        </button>
+
       </div>
 
-      {
-        counter.active ? (
+      {/* Counter Info */}
+
+      <div className="bg-gray-900 border border-green-500 rounded-2xl p-8 mb-8 shadow-2xl">
+
+        <div className="grid md:grid-cols-2 gap-5 text-2xl">
 
           <div>
 
-            <div className="bg-green-500 text-black p-5 rounded text-2xl font-bold inline-block mb-10">
-              Active Faculty: {counter.facultyName}
-            </div>
-
-            <div className="space-y-5 text-2xl">
-
-              <div>
-                Progress Student:
-                <span className="text-yellow-400 ml-3">
-                  {
-                    counter.progressStudent
-                      ? counter.progressStudent.name
-                      : "None"
-                  }
-                </span>
-              </div>
-
-              <div>
-                Waitlist Student:
-                <span className="text-cyan-400 ml-3">
-                  {
-                    counter.waitlistStudent
-                      ? counter.waitlistStudent.name
-                      : "None"
-                  }
-                </span>
-              </div>
-
-            </div>
-
-            <div className="flex gap-5 mt-10">
-
-              <button
-                onClick={() =>
-                  completeViva(
-                    counter.id,
-                    counter
-                  )
-                }
-                className="bg-red-500 px-6 py-3 rounded text-2xl font-bold"
-              >
-                Complete Viva
-              </button>
-
-              <button
-                onClick={endSession}
-                className="bg-gray-700 px-6 py-3 rounded text-2xl font-bold"
-              >
-                Session Over
-              </button>
-
-            </div>
+            Counter :
+            {" "}
+            <span className="text-green-400 font-bold">
+              {counterData.counterNo}
+            </span>
 
           </div>
 
-        ) : (
+          <div>
 
-          <div className="max-w-md">
+            Faculty :
+            {" "}
+            <span className="text-blue-400 font-bold">
+              {counterData.facultyName}
+            </span>
 
-            <input
-              type="text"
-              placeholder="Enter Faculty Name"
-              value={facultyName}
-              onChange={(e) =>
-                setFacultyName(e.target.value)
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* Progress Student */}
+
+      <div className="bg-gray-900 border border-blue-500 rounded-2xl p-8 mb-8 shadow-2xl">
+
+        <h2 className="text-3xl font-bold text-blue-400 mb-6">
+          In Progress
+        </h2>
+
+        {
+
+          counterData.progressStudent ? (
+
+            <div className="text-4xl font-bold text-white">
+
+              {
+                counterData.progressStudent.name
               }
-              className="w-full p-4 rounded bg-white text-black mb-5"
+
+            </div>
+
+          ) : (
+
+            <div className="text-gray-400 text-2xl">
+
+              No Student
+
+            </div>
+
+          )
+
+        }
+
+      </div>
+
+      {/* Waitlist Student */}
+
+      <div className="bg-gray-900 border border-yellow-500 rounded-2xl p-8 mb-8 shadow-2xl">
+
+        <h2 className="text-3xl font-bold text-yellow-400 mb-6">
+          Waitlist
+        </h2>
+
+        {
+
+          counterData.waitlistStudent ? (
+
+            <div className="text-4xl font-bold text-white">
+
+              {
+                counterData.waitlistStudent.name
+              }
+
+            </div>
+
+          ) : (
+
+            <div className="text-gray-400 text-2xl">
+
+              Waiting...
+
+            </div>
+
+          )
+
+        }
+
+      </div>
+
+      {/* Complete Button */}
+
+      <button
+        onClick={handleComplete}
+        disabled={
+          !counterData.progressStudent ||
+          loading
+        }
+        className="w-full bg-green-500 hover:bg-green-400 text-black font-bold text-2xl p-5 rounded-2xl flex items-center justify-center"
+      >
+
+        {
+
+          loading ? (
+
+            <Oval
+              height={35}
+              width={35}
+              color="black"
+              secondaryColor="gray"
+              strokeWidth={5}
             />
 
-            <button
-              onClick={activateCounter}
-              className="bg-blue-500 px-6 py-3 rounded text-xl"
-            >
-              Activate Counter
-            </button>
+          ) : (
 
-          </div>
+            "Complete Viva"
 
-        )
-      }
+          )
+
+        }
+
+      </button>
 
     </div>
+
   );
+
 }
 
 export default CounterScreen;

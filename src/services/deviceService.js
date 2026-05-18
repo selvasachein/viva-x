@@ -1,12 +1,28 @@
-import { v4 as uuidv4 } from "uuid";
+export const getDeviceId =
+  () => {
 
-export const getDeviceId = () => {
-  let deviceId = localStorage.getItem("deviceId");
+    let deviceId =
+      localStorage.getItem(
+        "vivaDeviceId"
+      );
 
-  if (!deviceId) {
-    deviceId = uuidv4();
-    localStorage.setItem("deviceId", deviceId);
-  }
+    // Generate Device ID
+    if (!deviceId) {
 
-  return deviceId;
+      deviceId =
+        "DEV-" +
+        Math.random()
+          .toString(36)
+          .substring(2, 10)
+          .toUpperCase();
+
+      localStorage.setItem(
+        "vivaDeviceId",
+        deviceId
+      );
+
+    }
+
+    return deviceId;
+
 };

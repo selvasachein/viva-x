@@ -7,8 +7,13 @@ import {
   getDoc
 } from "firebase/firestore";
 
-import { useNavigate }
-from "react-router-dom";
+import {
+  useNavigate
+} from "react-router-dom";
+
+import {
+  Oval
+} from "react-loader-spinner";
 
 import { db }
 from "../services/firebase";
@@ -21,11 +26,16 @@ function Login() {
   const [password, setPassword] =
     useState("");
 
+  const [loading, setLoading] =
+    useState(false);
+
   const navigate = useNavigate();
 
   const login = async () => {
 
     try {
+
+      setLoading(true);
 
       const docRef = await getDoc(
         doc(
@@ -40,6 +50,8 @@ function Login() {
         alert(
           "Admin config missing"
         );
+
+        setLoading(false);
 
         return;
 
@@ -72,9 +84,13 @@ function Login() {
 
       }
 
+      setLoading(false);
+
     } catch (error) {
 
       console.log(error);
+
+      setLoading(false);
 
     }
 
@@ -82,22 +98,28 @@ function Login() {
 
   return (
 
-    <div className="min-h-screen bg-black text-white flex items-center justify-center">
+    <div className="min-h-screen bg-black flex items-center justify-center p-5">
 
-      <div className="bg-gray-900 p-10 rounded-xl w-full max-w-md">
+      <div className="w-full max-w-md bg-gray-900 border border-green-500 rounded-2xl shadow-2xl p-10">
 
-        <h1 className="text-4xl font-bold mb-8 text-center text-green-400">
-          VIVA-X ADMIN
+        <h1 className="text-5xl font-extrabold text-center text-green-400 mb-3">
+          VIVA-X
         </h1>
+
+        <p className="text-center text-gray-400 mb-10">
+          Smart Queue Management
+        </p>
 
         <input
           type="text"
           placeholder="Username"
           value={username}
           onChange={(e) =>
-            setUsername(e.target.value)
+            setUsername(
+              e.target.value
+            )
           }
-          className="w-full p-4 rounded bg-white text-black mb-5"
+          className="w-full p-4 rounded-xl bg-white text-black mb-5 outline-none text-lg"
         />
 
         <input
@@ -105,16 +127,37 @@ function Login() {
           placeholder="Password"
           value={password}
           onChange={(e) =>
-            setPassword(e.target.value)
+            setPassword(
+              e.target.value
+            )
           }
-          className="w-full p-4 rounded bg-white text-black mb-5"
+          className="w-full p-4 rounded-xl bg-white text-black mb-8 outline-none text-lg"
         />
 
         <button
           onClick={login}
-          className="w-full bg-green-500 text-black p-4 rounded text-xl font-bold"
+          disabled={loading}
+          className="w-full bg-green-500 hover:bg-green-400 transition-all duration-300 text-black font-bold text-xl p-4 rounded-xl flex items-center justify-center"
         >
-          Login
+
+          {
+            loading ? (
+
+              <Oval
+                height={30}
+                width={30}
+                color="black"
+                secondaryColor="gray"
+                strokeWidth={5}
+              />
+
+            ) : (
+
+              "Login"
+
+            )
+          }
+
         </button>
 
       </div>

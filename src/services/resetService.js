@@ -1,14 +1,13 @@
 import {
   collection,
   getDocs,
-  deleteDoc,
-  doc,
   updateDoc,
-  getDoc,
-  setDoc
+  doc,
+  deleteDoc
 } from "firebase/firestore";
 
-import { db } from "./firebase";
+import { db }
+from "./firebase";
 
 export const checkDailyReset =
   async () => {
@@ -17,40 +16,68 @@ export const checkDailyReset =
 
       const today =
         new Date()
-          .toISOString()
-          .split("T")[0];
+          .toDateString();
 
-      const resetDoc = await getDoc(
-        doc(
-          db,
-          "system",
-          "dailyReset"
-        )
-      );
+      const lastReset =
+        localStorage.getItem(
+          "vivaLastReset"
+        );
 
-      let lastReset = "";
-
-      if (resetDoc.exists()) {
-
-        lastReset =
-          resetDoc.data().lastReset;
-
-      }
-
-      // Already reset today
-      if (lastReset === today) {
+      // Already Reset Today
+      if (
+        lastReset === today
+      ) {
 
         return;
 
       }
 
-      // Delete all students
-      const studentsSnapshot =
+      // Reset Counters
+      const counterSnapshot =
         await getDocs(
-          collection(db, "students")
+          collection(
+            db,
+            "counters"
+          )
         );
 
-      for (const studentDoc of studentsSnapshot.docs) {
+      for (
+        const counterDoc
+        of counterSnapshot.docs
+      ) {
+
+        await updateDoc(
+          doc(
+            db,
+            "counters",
+            counterDoc.id
+          ),
+          {
+            facultyName: "",
+
+            active: false,
+
+            progressStudent: null,
+
+            waitlistStudent: null
+          }
+        );
+
+      }
+
+      // Delete Students
+      const studentSnapshot =
+        await getDocs(
+          collection(
+            db,
+            "students"
+          )
+        );
+
+      for (
+        const studentDoc
+        of studentSnapshot.docs
+      ) {
 
         await deleteDoc(
           doc(
@@ -62,31 +89,7 @@ export const checkDailyReset =
 
       }
 
-      // Reset counters
-      const countersSnapshot =
-        await getDocs(
-          collection(db, "counters")
-        );
-
-      for (const counterDoc of countersSnapshot.docs) {
-
-        await updateDoc(
-          doc(
-            db,
-            "counters",
-            counterDoc.id
-          ),
-          {
-            active: false,
-            facultyName: "",
-            progressStudent: null,
-            waitlistStudent: null
-          }
-        );
-
-      }
-
-      // Expire QR
+      // Disable QR
       await updateDoc(
         doc(
           db,
@@ -98,16 +101,10 @@ export const checkDailyReset =
         }
       );
 
-      // Update reset date
-      await setDoc(
-        doc(
-          db,
-          "system",
-          "dailyReset"
-        ),
-        {
-          lastReset: today
-        }
+      // Save Reset Date
+      localStorage.setItem(
+        "vivaLastReset",
+        today
       );
 
       console.log(

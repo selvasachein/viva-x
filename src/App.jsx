@@ -4,17 +4,23 @@ import {
   Route
 } from "react-router-dom";
 
-import Login from "./pages/Login";
+import Login
+from "./pages/Login";
 
-import AdminDashboard from "./pages/AdminDashboard";
+import AdminDashboard
+from "./pages/AdminDashboard";
 
-import CounterScreen from "./pages/CounterScreen";
+import CounterScreen
+from "./pages/CounterScreen";
 
-import StudentEntry from "./pages/StudentEntry";
+import StudentEntry
+from "./pages/StudentEntry";
 
-import StudentStatus from "./pages/StudentStatus";
+import StudentStatus
+from "./pages/StudentStatus";
 
-import QueueDisplay from "./pages/QueueDisplay";
+import QueueDisplay
+from "./pages/QueueDisplay";
 
 function App() {
 
@@ -24,40 +30,56 @@ function App() {
 
       <Routes>
 
-        {/* Login Page */}
+        {/* Login */}
+
         <Route
           path="/"
           element={<Login />}
         />
 
-        {/* Admin Dashboard */}
+        {/* Admin */}
+
         <Route
           path="/admin"
-          element={<AdminDashboard />}
+          element={
+            <AdminDashboard />
+          }
         />
 
         {/* Faculty Counter */}
+
         <Route
           path="/counter"
-          element={<CounterScreen />}
+          element={
+            <CounterScreen />
+          }
         />
 
-        {/* Student Entry */}
+        {/* Student QR Entry */}
+
         <Route
           path="/student-entry"
-          element={<StudentEntry />}
+          element={
+            <StudentEntry />
+          }
         />
 
-        {/* Student Status */}
+        {/* Student Live Status */}
+
         <Route
           path="/student-status/:id"
-          element={<StudentStatus />}
+          element={
+            <StudentStatus />
+          }
         />
 
         {/* Live Queue Display */}
+
         <Route
           path="/display"
-          element={<QueueDisplay />}
+          element={
+            <QueueDisplay />
+          }
         />
 
       </Routes>

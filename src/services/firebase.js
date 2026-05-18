@@ -1,15 +1,41 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp }
+from "firebase/app";
 
+import {
+  getFirestore
+} from "firebase/firestore";
+
+// Firebase Config
 const firebaseConfig = {
-  apiKey: "AIzaSyCS7aS-TRbzTf4vTQq5nIsA-1SVJvO_eIY",
-  authDomain: "viva-x-smart-queue.firebaseapp.com",
-  projectId: "viva-x-smart-queue",
-  storageBucket: "viva-x-smart-queue.firebasestorage.app",
-  messagingSenderId: "271666163491",
-  appId: "1:271666163491:web:ea6b9fbde4a1363c39a696"
+
+  apiKey:
+    "YOUR_API_KEY",
+
+  authDomain:
+    "YOUR_PROJECT.firebaseapp.com",
+
+  projectId:
+    "YOUR_PROJECT_ID",
+
+  storageBucket:
+    "YOUR_PROJECT.firebasestorage.app",
+
+  messagingSenderId:
+    "YOUR_MESSAGING_SENDER_ID",
+
+  appId:
+    "YOUR_APP_ID"
+
 };
 
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase
+const app =
+  initializeApp(
+    firebaseConfig
+  );
 
-export const db = getFirestore(app);
+// Firestore DB
+export const db =
+  getFirestore(app);
+
+export default app;

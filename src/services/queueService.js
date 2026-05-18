@@ -9,204 +9,293 @@ import {
   limit
 } from "firebase/firestore";
 
-import { db } from "./firebase";
+import { db }
+from "./firebase";
 
-// Allocate student to available counter
-export const allocateStudent = async (
-  studentId,
-  studentName
-) => {
+// Allocate Student
+export const allocateStudent =
+  async (
+    studentId,
+    studentName
+  ) => {
 
-  try {
+    try {
 
-    const countersSnapshot = await getDocs(
-      query(
-        collection(db, "counters"),
-        where("active", "==", true)
-      )
-    );
+      const countersSnapshot =
+        await getDocs(
+          query(
+            collection(
+              db,
+              "counters"
+            ),
+            where(
+              "active",
+              "==",
+              true
+            )
+          )
+        );
 
-    let allocated = false;
+      let allocated =
+        false;
 
-    for (const counterDoc of countersSnapshot.docs) {
+      for (
+        const counterDoc
+        of countersSnapshot.docs
+      ) {
 
-      const counter = counterDoc.data();
+        const counter =
+          counterDoc.data();
 
-      // Fill progress slot first
-      if (!counter.progressStudent) {
+        // Progress Slot
+        if (
+          !counter.progressStudent
+        ) {
 
-        await updateDoc(
-          doc(db, "counters", counterDoc.id),
-          {
-            progressStudent: {
-              id: studentId,
-              name: studentName
+          await updateDoc(
+            doc(
+              db,
+              "counters",
+              counterDoc.id
+            ),
+            {
+              progressStudent: {
+                id: studentId,
+                name: studentName
+              }
             }
-          }
-        );
+          );
 
-        await updateDoc(
-          doc(db, "students", studentId),
-          {
-            status: "progress",
-            assignedCounter: counter.counterNo,
-            assignedFaculty: counter.facultyName
-          }
-        );
+          await updateDoc(
+            doc(
+              db,
+              "students",
+              studentId
+            ),
+            {
+              status:
+                "progress",
 
-        allocated = true;
+              assignedCounter:
+                counter.counterNo,
 
-        break;
-
-      }
-
-      // Fill waitlist slot next
-      else if (!counter.waitlistStudent) {
-
-        await updateDoc(
-          doc(db, "counters", counterDoc.id),
-          {
-            waitlistStudent: {
-              id: studentId,
-              name: studentName
+              assignedFaculty:
+                counter.facultyName
             }
-          }
-        );
+          );
 
-        await updateDoc(
-          doc(db, "students", studentId),
-          {
-            status: "waitlist",
-            assignedCounter: counter.counterNo,
-            assignedFaculty: counter.facultyName
-          }
-        );
+          allocated = true;
 
-        allocated = true;
+          break;
 
-        break;
-
-      }
-
-    }
-
-    // No slots available
-    if (!allocated) {
-
-      await updateDoc(
-        doc(db, "students", studentId),
-        {
-          status: "waiting",
-          assignedCounter: null,
-          assignedFaculty: ""
         }
-      );
+
+        // Waitlist Slot
+        else if (
+          !counter.waitlistStudent
+        ) {
+
+          await updateDoc(
+            doc(
+              db,
+              "counters",
+              counterDoc.id
+            ),
+            {
+              waitlistStudent: {
+                id: studentId,
+                name: studentName
+              }
+            }
+          );
+
+          await updateDoc(
+            doc(
+              db,
+              "students",
+              studentId
+            ),
+            {
+              status:
+                "waitlist",
+
+              assignedCounter:
+                counter.counterNo,
+
+              assignedFaculty:
+                counter.facultyName
+            }
+          );
+
+          allocated = true;
+
+          break;
+
+        }
+
+      }
+
+      // No Slot Available
+      if (!allocated) {
+
+        await updateDoc(
+          doc(
+            db,
+            "students",
+            studentId
+          ),
+          {
+            status:
+              "waiting",
+
+            assignedCounter:
+              null,
+
+            assignedFaculty:
+              ""
+          }
+        );
+
+      }
+
+    } catch (error) {
+
+      console.log(error);
 
     }
-
-  } catch (error) {
-
-    console.log(error);
-
-  }
 
 };
 
-// Complete viva and move queue
-export const completeViva = async (
-  counterId,
-  counterData
-) => {
+// Complete Viva
+export const completeViva =
+  async (
+    counterId,
+    counterData
+  ) => {
 
-  try {
+    try {
 
-    // Delete current progress student
-    if (counterData.progressStudent) {
+      // Delete Progress Student
+      if (
+        counterData.progressStudent
+      ) {
 
-      await deleteDoc(
-        doc(
-          db,
-          "students",
-          counterData.progressStudent.id
-        )
-      );
+        await deleteDoc(
+          doc(
+            db,
+            "students",
+            counterData
+              .progressStudent.id
+          )
+        );
 
-    }
+      }
 
-    // Default empty slots
-    let newProgress = null;
+      // Default Empty
+      let newProgress =
+        null;
 
-    let newWaitlist = null;
+      let newWaitlist =
+        null;
 
-    // Move waitlist -> progress
-    if (counterData.waitlistStudent) {
+      // Waitlist -> Progress
+      if (
+        counterData.waitlistStudent
+      ) {
 
-      newProgress = {
-        ...counterData.waitlistStudent
-      };
+        newProgress = {
+          ...counterData
+            .waitlistStudent
+        };
 
+        await updateDoc(
+          doc(
+            db,
+            "students",
+            newProgress.id
+          ),
+          {
+            status:
+              "progress"
+          }
+        );
+
+      }
+
+      // Get Waiting Student
+      const waitingSnapshot =
+        await getDocs(
+          query(
+            collection(
+              db,
+              "students"
+            ),
+            where(
+              "status",
+              "==",
+              "waiting"
+            ),
+            limit(1)
+          )
+        );
+
+      // Waiting -> Waitlist
+      if (
+        !waitingSnapshot.empty
+      ) {
+
+        const waitingDoc =
+          waitingSnapshot.docs[0];
+
+        const waitingStudent =
+          waitingDoc.data();
+
+        newWaitlist = {
+          id: waitingDoc.id,
+          name:
+            waitingStudent.studentName
+        };
+
+        await updateDoc(
+          doc(
+            db,
+            "students",
+            waitingDoc.id
+          ),
+          {
+            status:
+              "waitlist",
+
+            assignedCounter:
+              counterData.counterNo,
+
+            assignedFaculty:
+              counterData.facultyName
+          }
+        );
+
+      }
+
+      // Update Counter
       await updateDoc(
         doc(
           db,
-          "students",
-          newProgress.id
+          "counters",
+          counterId
         ),
         {
-          status: "progress"
+          progressStudent:
+            newProgress,
+
+          waitlistStudent:
+            newWaitlist
         }
       );
 
-    }
+    } catch (error) {
 
-    // Find one waiting student
-    const waitingSnapshot = await getDocs(
-      query(
-        collection(db, "students"),
-        where("status", "==", "waiting"),
-        limit(1)
-      )
-    );
-
-    // Move waiting -> waitlist
-    if (!waitingSnapshot.empty) {
-
-      const waitingDoc =
-        waitingSnapshot.docs[0];
-
-      const waitingStudent =
-        waitingDoc.data();
-
-      newWaitlist = {
-        id: waitingDoc.id,
-        name: waitingStudent.studentName
-      };
-
-      await updateDoc(
-        doc(db, "students", waitingDoc.id),
-        {
-          status: "waitlist",
-          assignedCounter:
-            counterData.counterNo,
-          assignedFaculty:
-            counterData.facultyName
-        }
-      );
+      console.log(error);
 
     }
-
-    // Update counter
-    await updateDoc(
-      doc(db, "counters", counterId),
-      {
-        progressStudent: newProgress,
-        waitlistStudent: newWaitlist
-      }
-    );
-
-  } catch (error) {
-
-    console.log(error);
-
-  }
 
 };
