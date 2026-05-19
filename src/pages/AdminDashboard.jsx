@@ -55,6 +55,29 @@ function AdminDashboard() {
 
   const [activeCount, setActiveCount] = useState(0);
 
+  // =========================
+  // LOAD CAPACITY FROM FIRESTORE (NEW ADDITION)
+  // =========================
+
+  useEffect(() => {
+
+    const loadCapacity = async () => {
+
+      const snap = await getDoc(doc(db, "settings", "queueConfig"));
+
+      if (snap.exists()) {
+        const data = snap.data();
+
+        setBaseCapacity(data.baseCapacity || 25);
+        setCapacity(data.baseCapacity || 25);
+      }
+
+    };
+
+    loadCapacity();
+
+  }, []);
+
   // Protect Admin Page
   useEffect(() => {
 
@@ -73,9 +96,7 @@ function AdminDashboard() {
 
   }, []);
 
-  // =========================
   // FETCH ACTIVE SLOTS
-  // =========================
   const fetchActiveCount = async () => {
 
     const snap = await getDocs(collection(db, "slots"));
@@ -88,19 +109,25 @@ function AdminDashboard() {
   };
 
   // =========================
-  // FIXED CAPACITY LOGIC
+  // FIXED CAPACITY LOGIC (SYNC TO FIRESTORE)
   // =========================
+
   const updateCapacity = async () => {
 
     const add = Number(increment || 0);
 
     if (add <= 0) return;
 
-    const newBase = baseCapacity + add; // IMPORTANT FIX
+    const newBase = baseCapacity + add;
 
     setBaseCapacity(newBase);
     setCapacity(newBase);
     setIncrement(0);
+
+    // SAVE TO FIRESTORE (IMPORTANT FIX)
+    await setDoc(doc(db, "settings", "queueConfig"), {
+      baseCapacity: newBase
+    }, { merge: true });
 
   };
 
@@ -137,21 +164,23 @@ function AdminDashboard() {
 
   };
 
-  // Generate QR
+  // Generate QR (FIXED CAPACITY CHECK)
   const generateQR = async () => {
 
     try {
 
       setLoading(true);
 
-      const snap = await getDocs(collection(db, "slots"));
+      const slotSnap = await getDocs(collection(db, "slots"));
 
-      const count = snap.docs.filter(
-        (d) => d.data().status === "active"
-      ).length;
+      let totalBooked = 0;
+
+      slotSnap.docs.forEach((d) => {
+        totalBooked += d.data().booked || 0;
+      });
 
       // CAPACITY CHECK FIXED
-      if (count >= capacity) {
+      if (totalBooked >= capacity) {
         alert("Capacity FULL");
         setLoading(false);
         return;
@@ -166,12 +195,14 @@ function AdminDashboard() {
         {
           token,
           expiresAt,
-          active: true
-        }
+          active: true,
+          usedBy: null,
+          usedAt: null
+        },
+        { merge: true }
       );
 
       setQrToken(token);
-
       setLoading(false);
 
     } catch (error) {
@@ -233,7 +264,6 @@ function AdminDashboard() {
         {qrToken && (
           <div className="mt-10 bg-white inline-block p-6 rounded-2xl">
             <QRCodeSVG value={qrUrl} size={260} />
-           
           </div>
         )}
 
@@ -254,7 +284,7 @@ function AdminDashboard() {
           type="number"
           placeholder="Increase capacity (5,10,15...)"
           value={increment}
-          onChange={(e) => setIncrement(e.target.value)}
+          onChange={(e) => setIncrement(Number(e.target.value))}
           className="w-full max-w-md p-4 rounded-xl bg-white text-black mb-5"
         />
 
@@ -279,7 +309,7 @@ function AdminDashboard() {
           placeholder="Enter Counter Number"
           value={counterNo}
           onChange={(e) => setCounterNo(e.target.value)}
-          className="w-full max-w-md p-4 rounded-xl bg-white text-black mb-5"
+          className="w-full max-w-md p-4 rounded-xl bg-white mb-5"
         />
 
         <button

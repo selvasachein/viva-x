@@ -31,6 +31,21 @@ import {
   increaseSlotBooking
 } from "../services/slotService";
 
+const getDeviceId = () => {
+  let id = localStorage.getItem("deviceId");
+
+  if (!id) {
+    id =
+      "dev_" +
+      Math.random().toString(36).substring(2, 10) +
+      Date.now();
+
+    localStorage.setItem("deviceId", id);
+  }
+
+  return id;
+};
+
 function StudentEntry() {
 
   const [studentName, setStudentName] =
@@ -87,6 +102,14 @@ function StudentEntry() {
 
         const data =
           qrDoc.data();
+          const deviceId = getDeviceId();
+
+// BLOCK if QR already used by another device
+if (data.usedBy && data.usedBy !== deviceId) {
+  setValidQR(false);
+  setLoading(false);
+  return;
+}
 
         if (
           data.token === token &&
@@ -160,7 +183,53 @@ function StudentEntry() {
         }
 
         setJoining(true);
+// Join Queue
+const joinQueue = async () => {
+  try {
 
+    if (!studentName) {
+      alert("Enter Student Name");
+      return;
+    }
+
+    const slot = await getCurrentSlot();
+
+    if (!slot) {
+      alert("No Active Viva Slot");
+      return;
+    }
+
+    if (slot.booked >= slot.capacity) {
+      alert(`${slot.slot} Slot Full`);
+      return;
+    }
+
+    setJoining(true);
+
+    // ✅ STEP 3: ADD THIS HERE (LOCK QR)
+    const deviceId = getDeviceId();
+
+    await setDoc(
+      doc(db, "qrSessions", "currentSession"),
+      {
+        usedBy: deviceId,
+        usedAt: Date.now()
+      },
+      { merge: true }
+    );
+
+    // Create Student
+    const studentRef = await addDoc(
+      collection(db, "students"),
+      {
+        studentName,
+        status: "waiting",
+        assignedCounter: null,
+        assignedFaculty: "",
+        slot: slot.slot,
+        joinedAt: Date.now()
+      }
+    );
         // Create Student
         const studentRef =
           await addDoc(
