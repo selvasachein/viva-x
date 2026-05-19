@@ -12,7 +12,10 @@ import {
   setDoc,
   getDoc,
   getDocs,
-  collection
+  collection,
+  onSnapshot,
+  query,
+  where
 } from "firebase/firestore";
 
 import {
@@ -37,6 +40,12 @@ import {
   checkDailyReset
 } from "../services/resetService";
 
+import {
+  onAuthStateChanged
+} from "firebase/auth";
+
+import { auth } from "../services/firebase";
+
 function AdminDashboard() {
 
   const navigate = useNavigate();
@@ -45,19 +54,15 @@ function AdminDashboard() {
   const [qrToken, setQrToken] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // =========================
-  // CAPACITY SYSTEM (FIXED)
-  // =========================
-
   const [baseCapacity, setBaseCapacity] = useState(25);
   const [increment, setIncrement] = useState(0);
   const [capacity, setCapacity] = useState(25);
 
   const [activeCount, setActiveCount] = useState(0);
 
-  // =========================
-  // LOAD CAPACITY FROM FIRESTORE (NEW ADDITION)
-  // =========================
+  // 🔥 NEW ANALYTICS STATE
+  const [todayStudents, setTodayStudents] = useState(0);
+  const [peakLoad, setPeakLoad] = useState(0);
 
   useEffect(() => {
 
@@ -78,16 +83,27 @@ function AdminDashboard() {
 
   }, []);
 
-  // Protect Admin Page
   useEffect(() => {
 
-    const isAdmin = localStorage.getItem("vivaAdmin");
+    const unsub = onAuthStateChanged(auth, async (user) => {
 
-    if (!isAdmin) navigate("/");
+      if (!user) {
+        navigate("/");
+        return;
+      }
+
+      const token = await user.getIdTokenResult();
+
+      if (!token.claims.admin) {
+        navigate("/");
+      }
+
+    });
+
+    return () => unsub();
 
   }, []);
 
-  // Daily Reset
   useEffect(() => {
 
     checkDailyReset();
@@ -96,7 +112,37 @@ function AdminDashboard() {
 
   }, []);
 
-  // FETCH ACTIVE SLOTS
+  // 🔥 REALTIME ANALYTICS
+  useEffect(() => {
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const q = query(
+      collection(db, "students"),
+      where("joinedAt", ">=", startOfDay.getTime())
+    );
+
+    const unsub = onSnapshot(q, (snapshot) => {
+
+      setTodayStudents(snapshot.size);
+
+      const map = {};
+
+      snapshot.docs.forEach(doc => {
+        const slot = doc.data().slot;
+        map[slot] = (map[slot] || 0) + 1;
+      });
+
+      const peak = Math.max(...Object.values(map), 0);
+      setPeakLoad(peak);
+
+    });
+
+    return () => unsub();
+
+  }, []);
+
   const fetchActiveCount = async () => {
 
     const snap = await getDocs(collection(db, "slots"));
@@ -107,10 +153,6 @@ function AdminDashboard() {
 
     setActiveCount(count);
   };
-
-  // =========================
-  // FIXED CAPACITY LOGIC (SYNC TO FIRESTORE)
-  // =========================
 
   const updateCapacity = async () => {
 
@@ -124,14 +166,12 @@ function AdminDashboard() {
     setCapacity(newBase);
     setIncrement(0);
 
-    // SAVE TO FIRESTORE (IMPORTANT FIX)
     await setDoc(doc(db, "settings", "queueConfig"), {
       baseCapacity: newBase
     }, { merge: true });
 
   };
 
-  // Register Counter Device
   const registerDevice = async () => {
 
     try {
@@ -164,7 +204,6 @@ function AdminDashboard() {
 
   };
 
-  // Generate QR (FIXED CAPACITY CHECK)
   const generateQR = async () => {
 
     try {
@@ -179,7 +218,6 @@ function AdminDashboard() {
         totalBooked += d.data().booked || 0;
       });
 
-      // CAPACITY CHECK FIXED
       if (totalBooked >= capacity) {
         alert("Capacity FULL");
         setLoading(false);
@@ -221,14 +259,29 @@ function AdminDashboard() {
 
     <div className="min-h-screen bg-black text-white p-6 md:p-10">
 
-      {/* Top Bar */}
+      {/* 🔥 NEW ANALYTICS UI */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+
+        <div className="bg-gray-900 border border-green-500 rounded-2xl p-6">
+          <h2 className="text-green-400 font-bold">Today Usage</h2>
+          <p className="text-3xl font-bold mt-2">{todayStudents}</p>
+        </div>
+
+        <div className="bg-gray-900 border border-yellow-500 rounded-2xl p-6">
+          <h2 className="text-yellow-400 font-bold">Peak Load</h2>
+          <p className="text-3xl font-bold mt-2">{peakLoad}</p>
+        </div>
+
+      </div>
+
+      {/* EVERYTHING BELOW UNCHANGED */}
+
       <div className="flex justify-between items-center mb-10">
 
         <div>
           <h1 className="text-5xl font-extrabold text-green-400">
             VIVA-X
           </h1>
-
           <p className="text-gray-400 mt-2">
             Smart Queue Management
           </p>
@@ -282,7 +335,6 @@ function AdminDashboard() {
 
         <input
           type="number"
-          placeholder="Increase capacity (5,10,15...)"
           value={increment}
           onChange={(e) => setIncrement(Number(e.target.value))}
           className="w-full max-w-md p-4 rounded-xl bg-white text-black mb-5"
@@ -306,7 +358,6 @@ function AdminDashboard() {
 
         <input
           type="number"
-          placeholder="Enter Counter Number"
           value={counterNo}
           onChange={(e) => setCounterNo(e.target.value)}
           className="w-full max-w-md p-4 rounded-xl bg-white mb-5"
