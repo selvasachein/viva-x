@@ -15,8 +15,14 @@ import {
   Oval
 } from "react-loader-spinner";
 
-import { db }
-from "../services/firebase";
+import {
+  signInWithEmailAndPassword
+} from "firebase/auth";
+
+import {
+  db,
+  auth
+} from "../services/firebase";
 
 function Login() {
 
@@ -69,6 +75,13 @@ function Login() {
           data.passwordHash
       ) {
 
+        // FIREBASE AUTH LOGIN
+        await signInWithEmailAndPassword(
+          auth,
+          "admin@vivax.com",
+          "Admin@123"
+        );
+
         localStorage.setItem(
           "vivaAdmin",
           "true"
@@ -89,7 +102,9 @@ function Login() {
     } catch (error) {
 
       console.log(error);
- alert(error.message);
+
+      alert(error.message);
+
       setLoading(false);
 
     }
