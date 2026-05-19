@@ -1,11 +1,8 @@
 import { useState } from "react";
 
-import CryptoJS from "crypto-js";
-
 import {
-  doc,
-  getDoc
-} from "firebase/firestore";
+  signInWithEmailAndPassword
+} from "firebase/auth";
 
 import {
   useNavigate
@@ -16,17 +13,12 @@ import {
 } from "react-loader-spinner";
 
 import {
-  signInWithEmailAndPassword
-} from "firebase/auth";
-
-import {
-  db,
   auth
 } from "../services/firebase";
 
 function Login() {
 
-  const [username, setUsername] =
+  const [email, setEmail] =
     useState("");
 
   const [password, setPassword] =
@@ -43,71 +35,23 @@ function Login() {
 
       setLoading(true);
 
-      const docRef = await getDoc(
-        doc(
-          db,
-          "adminConfig",
-          "credentials"
-        )
+      await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
       );
 
-      if (!docRef.exists()) {
-
-        alert(
-          "Admin config missing"
-        );
-
-        setLoading(false);
-
-        return;
-
-      }
-
-      const data = docRef.data();
-
-      const hashedPassword =
-        CryptoJS.SHA256(password)
-          .toString();
-
-      if (
-        username === data.username &&
-        hashedPassword ===
-          data.passwordHash
-      ) {
-
-        // FIREBASE AUTH LOGIN
-        await signInWithEmailAndPassword(
-          auth,
-          "admin@vivax.com",
-          "Admin@123"
-        );
-
-        localStorage.setItem(
-          "vivaAdmin",
-          "true"
-        );
-
-        navigate("/admin");
-
-      } else {
-
-        alert(
-          "Invalid Credentials"
-        );
-
-      }
-
-      setLoading(false);
+      navigate("/admin");
 
     } catch (error) {
 
       console.log(error);
 
-      alert(error.message);
-
-      setLoading(false);
+      alert("Invalid Login Credentials");
 
     }
+
+    setLoading(false);
 
   };
 
@@ -126,13 +70,11 @@ function Login() {
         </p>
 
         <input
-          type="text"
-          placeholder="Username"
-          value={username}
+          type="email"
+          placeholder="Admin Email"
+          value={email}
           onChange={(e) =>
-            setUsername(
-              e.target.value
-            )
+            setEmail(e.target.value)
           }
           className="w-full p-4 rounded-xl bg-white text-black mb-5 outline-none text-lg"
         />
@@ -142,9 +84,7 @@ function Login() {
           placeholder="Password"
           value={password}
           onChange={(e) =>
-            setPassword(
-              e.target.value
-            )
+            setPassword(e.target.value)
           }
           className="w-full p-4 rounded-xl bg-white text-black mb-8 outline-none text-lg"
         />
