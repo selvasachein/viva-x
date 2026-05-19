@@ -1,6 +1,6 @@
 const admin = require("firebase-admin");
 
-const serviceAccount = require("./viva-x-smart-queue-firebase-adminsdk-fbsvc-feaf8c29ce.json");
+const serviceAccount = require("./viva-x-smart-queue-firebase-adminsdk-fbsvc-2229ec3573");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)

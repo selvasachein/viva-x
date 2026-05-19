@@ -12,7 +12,8 @@ import {
   collection,
   addDoc,
   doc,
-  getDoc
+  getDoc,
+  setDoc
 } from "firebase/firestore";
 
 import {
@@ -32,18 +33,30 @@ import {
 } from "../services/slotService";
 
 const getDeviceId = () => {
-  let id = localStorage.getItem("deviceId");
+
+  let id =
+    localStorage.getItem(
+      "deviceId"
+    );
 
   if (!id) {
+
     id =
       "dev_" +
-      Math.random().toString(36).substring(2, 10) +
+      Math.random()
+        .toString(36)
+        .substring(2, 10) +
       Date.now();
 
-    localStorage.setItem("deviceId", id);
+    localStorage.setItem(
+      "deviceId",
+      id
+    );
+
   }
 
   return id;
+
 };
 
 function StudentEntry() {
@@ -102,14 +115,23 @@ function StudentEntry() {
 
         const data =
           qrDoc.data();
-          const deviceId = getDeviceId();
 
-// BLOCK if QR already used by another device
-if (data.usedBy && data.usedBy !== deviceId) {
-  setValidQR(false);
-  setLoading(false);
-  return;
-}
+        const deviceId =
+          getDeviceId();
+
+        // BLOCK if QR already used by another device
+        if (
+          data.usedBy &&
+          data.usedBy !== deviceId
+        ) {
+
+          setValidQR(false);
+
+          setLoading(false);
+
+          return;
+
+        }
 
         if (
           data.token === token &&
@@ -183,53 +205,27 @@ if (data.usedBy && data.usedBy !== deviceId) {
         }
 
         setJoining(true);
-// Join Queue
-const joinQueue = async () => {
-  try {
 
-    if (!studentName) {
-      alert("Enter Student Name");
-      return;
-    }
+        // LOCK QR TO DEVICE
+        const deviceId =
+          getDeviceId();
 
-    const slot = await getCurrentSlot();
+        await setDoc(
+          doc(
+            db,
+            "qrSessions",
+            "currentSession"
+          ),
+          {
+            usedBy:
+              deviceId,
 
-    if (!slot) {
-      alert("No Active Viva Slot");
-      return;
-    }
+            usedAt:
+              Date.now()
+          },
+          { merge: true }
+        );
 
-    if (slot.booked >= slot.capacity) {
-      alert(`${slot.slot} Slot Full`);
-      return;
-    }
-
-    setJoining(true);
-
-    // ✅ STEP 3: ADD THIS HERE (LOCK QR)
-    const deviceId = getDeviceId();
-
-    await setDoc(
-      doc(db, "qrSessions", "currentSession"),
-      {
-        usedBy: deviceId,
-        usedAt: Date.now()
-      },
-      { merge: true }
-    );
-
-    // Create Student
-    const studentRef = await addDoc(
-      collection(db, "students"),
-      {
-        studentName,
-        status: "waiting",
-        assignedCounter: null,
-        assignedFaculty: "",
-        slot: slot.slot,
-        joinedAt: Date.now()
-      }
-    );
         // Create Student
         const studentRef =
           await addDoc(
@@ -337,96 +333,114 @@ const joinQueue = async () => {
   }
 
   return (
-  <div className="min-h-screen bg-black flex flex-col items-center justify-start p-5">
 
-    {/* TOP SECTION */}
-    <div className="w-full flex flex-col items-center justify-center">
+    <div className="min-h-screen bg-black flex flex-col items-center justify-start p-5">
 
-      <div className="w-full max-w-md bg-gray-900 border border-green-500 rounded-2xl shadow-2xl p-10">
+      {/* TOP SECTION */}
+      <div className="w-full flex flex-col items-center justify-center">
 
-        <h1 className="text-5xl font-extrabold text-center text-green-400 mb-3">
-          VIVA-X
-        </h1>
+        <div className="w-full max-w-md bg-gray-900 border border-green-500 rounded-2xl shadow-2xl p-10">
 
-        <p className="text-center text-gray-400 mb-8">
-          Student Queue Entry
-        </p>
+          <h1 className="text-5xl font-extrabold text-center text-green-400 mb-3">
+            VIVA-X
+          </h1>
 
-        {/* Current Slot Info */}
-        <div className="bg-black border border-blue-500 rounded-xl p-4 mb-6 text-center">
+          <p className="text-center text-gray-400 mb-8">
+            Student Queue Entry
+          </p>
 
-          <div className="text-blue-400 text-lg font-bold mb-2">
-            Current Viva Slot
+          {/* Current Slot Info */}
+          <div className="bg-black border border-blue-500 rounded-xl p-4 mb-6 text-center">
+
+            <div className="text-blue-400 text-lg font-bold mb-2">
+              Current Viva Slot
+            </div>
+
+            <div className="text-white text-2xl font-bold">
+              Auto Detected by System Time
+            </div>
+
           </div>
 
-          <div className="text-white text-2xl font-bold">
-            Auto Detected by System Time
-          </div>
+          <input
+            type="text"
+            placeholder="Enter Your Name"
+            value={studentName}
+            onChange={(e) =>
+              setStudentName(
+                e.target.value
+              )
+            }
+            className="w-full p-4 rounded-xl bg-white text-black text-lg mb-8 outline-none"
+          />
+
+          <button
+            onClick={joinQueue}
+            disabled={joining}
+            className="w-full bg-green-500 hover:bg-green-400 transition-all duration-300 text-black font-bold text-xl p-4 rounded-xl flex items-center justify-center"
+          >
+
+            {
+
+              joining ? (
+
+                <Oval
+                  height={30}
+                  width={30}
+                  color="black"
+                  secondaryColor="gray"
+                  strokeWidth={5}
+                />
+
+              ) : (
+
+                "Join Queue"
+
+              )
+
+            }
+
+          </button>
 
         </div>
 
-        <input
-          type="text"
-          placeholder="Enter Your Name"
-          value={studentName}
-          onChange={(e) => setStudentName(e.target.value)}
-          className="w-full p-4 rounded-xl bg-white text-black text-lg mb-8 outline-none"
-        />
+      </div>
 
-        <button
-          onClick={joinQueue}
-          disabled={joining}
-          className="w-full bg-green-500 hover:bg-green-400 transition-all duration-300 text-black font-bold text-xl p-4 rounded-xl flex items-center justify-center"
-        >
-          {joining ? (
-            <Oval
-              height={30}
-              width={30}
-              color="black"
-              secondaryColor="gray"
-              strokeWidth={5}
-            />
-          ) : (
-            "Join Queue"
-          )}
-        </button>
+      {/* FOOTER */}
+      <div className="w-full flex flex-col items-center justify-center text-center border-t border-gray-700 pt-6 relative overflow-hidden px-4 sm:px-6 mt-2">
+
+        {/* Floating background glow */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-2 left-1/4 w-20 h-20 sm:w-32 sm:h-32 bg-green-500 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-2 right-1/4 w-20 h-20 sm:w-32 sm:h-32 bg-blue-500 rounded-full blur-3xl animate-pulse"></div>
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 w-full max-w-md sm:max-w-lg">
+
+          <h2 className="text-lg sm:text-2xl font-extrabold tracking-wide bg-gradient-to-r from-green-400 via-white to-green-400 bg-clip-text text-transparent animate-pulse">
+            VIVA-X Smart Queue System
+          </h2>
+
+          <p className="text-gray-400 mt-2 text-xs sm:text-sm">
+            ⚡ Real-time Queue 📡 Live Sync
+          </p>
+
+          <p className="text-gray-500 mt-3 italic text-xs sm:text-sm">
+            Designed & Developed with precision by
+          </p>
+
+          <p className="text-green-300 font-bold text-base sm:text-lg mt-1 tracking-wider animate-pulse break-words">
+            Dr. R. Selvakumar
+          </p>
+
+        </div>
 
       </div>
+
     </div>
 
-    {/* FOOTER */}
-    <div className="w-full flex flex-col items-center justify-center text-center border-t border-gray-700 pt-6 relative overflow-hidden px-4 sm:px-6 mt-2">
-
-      {/* Floating background glow */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-2 left-1/4 w-20 h-20 sm:w-32 sm:h-32 bg-green-500 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-2 right-1/4 w-20 h-20 sm:w-32 sm:h-32 bg-blue-500 rounded-full blur-3xl animate-pulse"></div>
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 w-full max-w-md sm:max-w-lg">
-
-        <h2 className="text-lg sm:text-2xl font-extrabold tracking-wide bg-gradient-to-r from-green-400 via-white to-green-400 bg-clip-text text-transparent animate-pulse">
-          VIVA-X Smart Queue System
-        </h2>
-
-        <p className="text-gray-400 mt-2 text-xs sm:text-sm">
-          ⚡ Real-time Queue 📡 Live Sync
-        </p>
-
-        <p className="text-gray-500 mt-3 italic text-xs sm:text-sm">
-          Designed & Developed with precision by
-        </p>
-
-        <p className="text-green-300 font-bold text-base sm:text-lg mt-1 tracking-wider animate-pulse break-words">
-          Dr. R. Selvakumar
-        </p>
-
-      </div>
-    </div>
-
-  </div>
-);
+  );
 
 }
 
